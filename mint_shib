@@ -1,0 +1,58 @@
+import time
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
+# 连接到Polygon主网
+web3 = Web3(Web3.HTTPProvider('https://www.shibrpc.com/'))
+
+# 添加POA中间件为了能够正确的发送交易
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+# 您的钱包地址和私钥
+my_address = ''
+private_key = ''
+
+# 接收方地址
+to_address = ''
+
+# 附加的16进制数据
+data = '0x646174613a2c7b2270223a227372632d3230222c226f70223a226d696e74222c227469636b223a2273686962222c22616d74223a223130303030303030227d'
+
+# 获取当前nonce
+nonce = web3.eth.getTransactionCount(my_address)
+
+while True:
+    # 设置转账数量为0
+    amount = 0
+
+    # 获取当前的Gas价格并增加50%的溢价,看自己可以不用溢价
+    current_gas_price = web3.eth.gasPrice
+    # increased_gas_price = int(current_gas_price * 1.5)
+    
+    # 构建交易
+    tx = {
+        'chainId': 109,  # Polygon主网的chainId
+        'to': to_address,
+        'value': amount,
+        'gas': 100000,  # 标准的燃料限额
+        'gasPrice': current_gas_price,  # 使用增加了50%溢价的Gas价格
+        'nonce': nonce,
+        'data': data
+    }
+
+    # 签署交易
+    signed_tx = web3.eth.account.signTransaction(tx, private_key)
+
+    # 发送交易
+    tx_hash = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
+
+    # 获取交易hash
+    print(f"Transaction hash: {web3.toHex(tx_hash)}")
+
+    # 增加nonce以备下次循环使用
+    nonce += 1
+
+    # 等待一段时间
+    time.sleep(0.5)
+
+
